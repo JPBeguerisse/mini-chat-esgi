@@ -33,7 +33,7 @@ export class AuthService {
       throw new UnauthorizedException('Email ou Mot de passe invalide');
     }
 
-    const payload = { sub: user.id, email: user.email };
+    const payload = { sub: user.id, username: user.username };
     const token = this.jwtService.sign(payload);
     return {
       access_token: token,
