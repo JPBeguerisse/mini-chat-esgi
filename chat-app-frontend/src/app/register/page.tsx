@@ -30,7 +30,10 @@ export default function RegisterPage() {
       setUsernameError("");
       setGeneralError("");
 
-      await axios.post("http://localhost:8000/auth/register", data);
+      await axios.post(
+        `${process.env.NEXT_PUBLIC_API_URL}/auth/register`,
+        data
+      );
       router.push("/login");
     } catch (error: any) {
       if (error.response && error.response.data.message) {

@@ -3,7 +3,6 @@ import { CreateUserDto } from 'src/users/dto/create-user.dto';
 import { UsersService } from 'src/users/users.service';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
-import { User } from 'src/users/entities/user.entity';
 
 @Injectable()
 export class AuthService {
@@ -33,7 +32,12 @@ export class AuthService {
       throw new UnauthorizedException('Email ou Mot de passe invalide');
     }
 
-    const payload = { sub: user.id, username: user.username };
+    const payload = {
+      sub: user.id,
+      username: user.username,
+      color: user.color,
+    };
+
     const token = this.jwtService.sign(payload);
     return {
       access_token: token,
