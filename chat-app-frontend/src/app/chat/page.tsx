@@ -4,12 +4,21 @@ import { useEffect, useState, useRef } from "react";
 import { io, Socket } from "socket.io-client";
 import { useRouter } from "next/navigation";
 
+interface Message {
+  username: string;
+  content: string;
+  color: string;
+}
+
+interface User {
+  username: string;
+  color: string;
+}
+
 export default function ChatPage() {
   const [message, setMessage] = useState("");
-  const [messages, setMessages] = useState<
-    { username: string; message: string }[]
-  >([]);
-  const [connectedUsers, setConnectedUsers] = useState<string[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [connectedUsers, setConnectedUsers] = useState<User[]>([]);
   const [username, setUsername] = useState("");
   const router = useRouter();
   const socketRef = useRef<Socket | null>(null);
@@ -23,7 +32,7 @@ export default function ChatPage() {
     }
 
     // 📡 Connexion avec le token JWT
-    const socket = io("http://localhost:8000", {
+    const socket = io(process.env.NEXT_PUBLIC_API_URL as string, {
       transports: ["websocket"],
       auth: {
         token,
@@ -32,15 +41,20 @@ export default function ChatPage() {
 
     socketRef.current = socket;
 
-    // 🔄 Récupère le username depuis le token
     const decodedToken = JSON.parse(atob(token.split(".")[1]));
     setUsername(decodedToken.username);
 
-    socket.on("message", (data) => {
+    // 🔄 Récupère l'historique des messages
+    socket.on("history", (history: Message[]) => {
+      setMessages(history);
+    });
+
+    socket.on("message", (data: Message) => {
       setMessages((prev) => [...prev, data]);
     });
 
-    socket.on("users", (users) => {
+    // 🔄 Récupère la liste des utilisateurs connectés
+    socket.on("users", (users: User[]) => {
       setConnectedUsers(users);
     });
 
@@ -52,6 +66,7 @@ export default function ChatPage() {
     return () => {
       socket.off("message");
       socket.off("users");
+      socket.off("history");
       socket.disconnect();
     };
   }, [router]);
@@ -63,9 +78,24 @@ export default function ChatPage() {
     }
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    socketRef.current?.disconnect();
+    router.push("/login");
+  };
+
+  console.log("Messages:", messages);
   return (
     <div className="p-8">
-      <h2 className="text-3xl font-bold mb-4">Chat Room</h2>
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-3xl font-bold">Chat Room</h2>
+        <button
+          onClick={handleLogout}
+          className="bg-red-500 text-white py-2 px-4 rounded hover:bg-red-600 transition"
+        >
+          Déconnexion
+        </button>
+      </div>
 
       <p className="mb-4">
         Connecté en tant que : <strong>{username}</strong>
@@ -74,8 +104,9 @@ export default function ChatPage() {
       <div className="mb-4">
         <ul>
           {messages.map((msg, index) => (
-            <li key={index} className="mb-2">
-              <strong>{msg.username}:</strong> {msg.message}
+            <li key={index} className="mb-2" style={{ color: msg.color }}>
+              <strong>{msg.username}:</strong>{" "}
+              <span style={{ color: msg.color }}>{msg.content}</span>
             </li>
           ))}
         </ul>
@@ -91,18 +122,18 @@ export default function ChatPage() {
         />
         <button
           onClick={handleSendMessage}
-          className="bg-green-600 text-white py-3 px-6 rounded hover:bg-green-700 transition"
+          className="bg-blue-500  text-white py-3 px-6 rounded hover:bg-blue-700 transition"
         >
-          Send
+          Envoyer
         </button>
       </div>
 
       <div>
-        <h3 className="text-lg font-bold">Connected Users:</h3>
+        <h3 className="text-lg font-bold">Utilisateur connectés</h3>
         <ul>
-          {connectedUsers.map((username, index) => (
-            <li key={index} className="mb-1">
-              {username}
+          {connectedUsers.map((user, index) => (
+            <li key={index} style={{ color: user.color }}>
+              {user.username}
             </li>
           ))}
         </ul>

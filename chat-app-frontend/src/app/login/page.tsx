@@ -22,10 +22,13 @@ export default function LoginPage() {
     resolver: zodResolver(loginSchema),
   });
 
+  console.log("Errors:", errors);
+  console.log("Server Error:", serverError);
+
   const onSubmit = async (data: loginFormData) => {
     try {
       const response = await axios.post(
-        "http://localhost:8000/auth/login",
+        `${process.env.NEXT_PUBLIC_API_URL}/auth/login`,
         data
       );
       localStorage.setItem("token", response.data.access_token);
@@ -72,10 +75,10 @@ export default function LoginPage() {
         >
           Login
         </button>
-        {serverError.includes("e-mail") ||
-          (serverError.includes("password") && (
-            <p className="text-red-500 text-sm">{serverError}</p>
-          ))}
+        {(serverError.includes("Email") ||
+          serverError.includes("Mot de passe")) && (
+          <p className="text-red-500 text-sm">{serverError}</p>
+        )}
       </form>
       <p className="text-center text-sm mt-4">
         Pas encore inscrit ?{" "}

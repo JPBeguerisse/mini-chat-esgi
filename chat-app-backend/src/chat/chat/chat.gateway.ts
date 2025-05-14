@@ -10,10 +10,11 @@ import {
 import { Server, Socket } from 'socket.io';
 import * as jwt from 'jsonwebtoken';
 import { ConfigService } from '@nestjs/config';
+import { MessagesService } from 'src/messages/messages.service';
 
 @WebSocketGateway({
   cors: {
-    origin: 'http://localhost:3001',
+    origin: '*',
     methods: ['GET', 'POST'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
@@ -23,10 +24,15 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
 
-  private connectedUsers: Record<string, { userId: string; username: string }> =
-    {};
+  private connectedUsers: Record<
+    string,
+    { userId: string; username: string; color: string }
+  > = {};
 
-  constructor(private configService: ConfigService) {}
+  constructor(
+    private configService: ConfigService,
+    private messagesService: MessagesService,
+  ) {}
 
   async handleConnection(client: Socket) {
     try {
@@ -47,16 +53,23 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       const payload = jwt.verify(token, secret) as jwt.JwtPayload;
 
-      // ✅ Enregistre l'utilisateur avec son username
+      // Enregistre l'utilisateur avec son username
       this.connectedUsers[client.id] = {
         userId: payload.sub as string,
         username: payload.username as string,
+        color: payload.color as string,
       };
 
-      // ✅ Envoie seulement les usernames, pas les objets complets
-      const usernames = Object.values(this.connectedUsers).map(
-        (user) => user.username,
-      );
+      // Envoie l'historique des messages au client connecté
+      const messages = await this.messagesService.findAll();
+      client.emit('history', messages);
+
+      // Envoie seulement les usernames et la couleur des utilisateurs connectés
+      const usernames = Object.values(this.connectedUsers).map((user) => ({
+        username: user.username,
+        color: user.color,
+      }));
+      console.log('Utilisateurs connectés :', usernames);
       this.server.emit('users', usernames);
     } catch (error) {
       console.log('Connexion refusée : token invalide');
@@ -65,24 +78,36 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   handleDisconnect(client: Socket) {
-    console.log(`User disconnected: ${client.id}`);
+    // console.log(`User disconnected: ${client.id}`);
     delete this.connectedUsers[client.id];
 
-    // ✅ Envoie seulement les usernames restants
-    const usernames = Object.values(this.connectedUsers).map(
-      (user) => user.username,
-    );
+    // Envoie seulement les usernames restants
+    const usernames = Object.values(this.connectedUsers).map((user) => ({
+      username: user.username,
+      color: user.color,
+    }));
+
     this.server.emit('users', usernames);
   }
 
   @SubscribeMessage('message')
-  handleMessage(
+  async handleMessage(
     @ConnectedSocket() client: Socket,
     @MessageBody() message: string,
   ) {
     const user = this.connectedUsers[client.id];
     if (user) {
-      this.server.emit('message', { username: user.username, message });
+      const savedMessage = await this.messagesService.create(
+        user.username,
+        message,
+        user.color,
+      );
+
+      this.server.emit('message', {
+        username: user.username,
+        content: savedMessage.content,
+        color: savedMessage.color,
+      });
     }
   }
 }
