@@ -1,4 +1,4 @@
-import { IsEmail, IsString, MinLength } from 'class-validator';
+import { IsEmail, IsString, Matches, MinLength } from 'class-validator';
 
 export class CreateUserDto {
   @IsString()
@@ -12,5 +12,8 @@ export class CreateUserDto {
   password: string;
 
   @IsString()
+  @Matches(/^#[0-9A-Fa-f]{6}$/, {
+    message: 'La couleur doit être un code hexadecimal valide (ex: #ff0000)',
+  })
   color: string;
 }
