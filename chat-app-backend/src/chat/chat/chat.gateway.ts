@@ -11,6 +11,7 @@ import { Server, Socket } from 'socket.io';
 import * as jwt from 'jsonwebtoken';
 import { ConfigService } from '@nestjs/config';
 import { MessagesService } from 'src/messages/messages.service';
+import { UsersService } from 'src/users/users.service';
 
 @WebSocketGateway({
   cors: {
@@ -32,6 +33,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   constructor(
     private configService: ConfigService,
     private messagesService: MessagesService,
+    private usersService: UsersService,
   ) {}
 
   async handleConnection(client: Socket) {
@@ -53,7 +55,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       const payload = jwt.verify(token, secret) as jwt.JwtPayload;
 
-      // Enregistre l'utilisateur avec son username
+      // Enregistre l'utilisateur avec son username et sa couleur
       this.connectedUsers[client.id] = {
         userId: payload.sub as string,
         username: payload.username as string,
@@ -96,18 +98,52 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @MessageBody() message: string,
   ) {
     const user = this.connectedUsers[client.id];
-    if (user) {
-      const savedMessage = await this.messagesService.create(
-        user.username,
-        message,
-        user.color,
-      );
+    if (!user) return;
+    const savedMessage = await this.messagesService.create(
+      user.username,
+      message,
+      user.color,
+    );
 
-      this.server.emit('message', {
-        username: user.username,
-        content: savedMessage.content,
-        color: savedMessage.color,
-      });
+    this.server.emit('message', {
+      username: user.username,
+      content: savedMessage.content,
+      color: savedMessage.color,
+    });
+  }
+
+  @SubscribeMessage('updateColor')
+  async handleUpdateColor(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() color: string,
+  ) {
+    const user = this.connectedUsers[client.id];
+    if (!user) return;
+    // Mise à jour mémoire
+    user.color = color;
+    // Persistance en base
+    await this.usersService.updateColor(user.userId, color);
+    // Redistribue la liste users
+    const list = Object.values(this.connectedUsers).map(u => ({
+      username: u.username,
+      color: u.color,
+    }));
+    this.server.emit('users', list);
+  }
+
+  @SubscribeMessage('typing')
+  handleTyping(@ConnectedSocket() client: Socket) {
+    const user = this.connectedUsers[client.id];
+    if (user) {
+      this.server.emit('userTyping', user.username);
+    }
+  }
+
+  @SubscribeMessage('stopTyping')
+  handleStopTyping(@ConnectedSocket() client: Socket) {
+    const user = this.connectedUsers[client.id];
+    if (user) {
+      this.server.emit('userStopTyping', user.username);
     }
   }
 }
