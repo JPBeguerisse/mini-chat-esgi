@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Message } from './entities/messages.entity';
@@ -31,5 +31,20 @@ export class MessagesService {
         createdAt: 'ASC',
       },
     });
+  }
+
+  // modifier un message par son ID
+  async update(id: string, content: string): Promise<Message> {
+    const message = await this.messagesRepository.findOneBy({ id });
+    if (!message) throw new NotFoundException('Message non trouvé');
+    message.content = content;
+    return this.messagesRepository.save(message);
+  }
+
+  // Supprimer un message par son ID
+  async remove(id: string): Promise<void> {
+    const message = await this.messagesRepository.findOneBy({ id });
+    if (!message) throw new NotFoundException('Message non trouvé');
+    await this.messagesRepository.remove(message);
   }
 }

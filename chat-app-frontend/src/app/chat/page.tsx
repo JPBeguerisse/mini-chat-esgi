@@ -86,57 +86,97 @@ export default function ChatPage() {
 
   console.log("Messages:", messages);
   return (
-    <div className="p-8">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-3xl font-bold">Chat Room</h2>
-        <button
-          onClick={handleLogout}
-          className="bg-red-500 text-white py-2 px-4 rounded hover:bg-red-600 transition"
-        >
-          Déconnexion
-        </button>
-      </div>
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
+      <div className="w-full max-w-4xl bg-white shadow-lg rounded-lg overflow-hidden flex flex-col md:flex-row">
+        {/* Utilisateurs connectés */}
+        <div className="md:w-1/4 border-r p-4 bg-gray-50 flex flex-col">
+          <h3 className="text-lg font-bold">Utilisateurs</h3>
+          <p className="text-sm text-gray-500 mb-2">
+            {connectedUsers.length} utilisateur(s) connecté(s)
+          </p>
+          <ul className="space-y-2 text-sm flex-1 overflow-auto font-bold">
+            {connectedUsers.map((user, index) => (
+              <li
+                key={index}
+                className="truncate"
+                style={{ color: user.color }}
+              >
+                {user.username}
+              </li>
+            ))}
+          </ul>
 
-      <p className="mb-4">
-        Connecté en tant que : <strong>{username}</strong>
-      </p>
+          <button
+            onClick={handleLogout}
+            className="mt-auto bg-gray-800 text-white py-2 px-4 rounded hover:bg-red-600 transition text-sm"
+          >
+            Déconnexion
+          </button>
+        </div>
 
-      <div className="mb-4">
-        <ul>
-          {messages.map((msg, index) => (
-            <li key={index} className="mb-2" style={{ color: msg.color }}>
-              <strong>{msg.username}:</strong>{" "}
-              <span style={{ color: msg.color }}>{msg.content}</span>
-            </li>
-          ))}
-        </ul>
-      </div>
+        {/* Chat principal */}
+        <div className="md:w-3/4 p-6 flex flex-col justify-between">
+          <div className="mb-4">
+            <h2 className="text-2xl font-bold mb-2">
+              Bienvenue, {username} 👋
+            </h2>
+            <p className="text-sm text-gray-500">
+              Commencez à discuter en temps réel avec les utilisateurs
+              connectés.
+            </p>
+          </div>
 
-      <div className="flex gap-2 mb-4">
-        <input
-          type="text"
-          placeholder="Enter your message"
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          className="flex-1 p-3 border rounded"
-        />
-        <button
-          onClick={handleSendMessage}
-          className="bg-blue-500  text-white py-3 px-6 rounded hover:bg-blue-700 transition"
-        >
-          Envoyer
-        </button>
-      </div>
+          {/* Messages */}
+          <div className="flex-1 overflow-y-auto mb-4 space-y-3 max-h-[400px] pr-2">
+            {messages.map((msg, index) => {
+              const isMe = msg.username === username;
 
-      <div>
-        <h3 className="text-lg font-bold">Utilisateur connectés</h3>
-        <ul>
-          {connectedUsers.map((user, index) => (
-            <li key={index} style={{ color: user.color }}>
-              {user.username}
-            </li>
-          ))}
-        </ul>
+              return (
+                <div
+                  key={index}
+                  className={`flex ${isMe ? "justify-end" : "justify-start"}`}
+                >
+                  <div
+                    className={`p-3 rounded-lg max-w-xs break-words shadow-md text-white ${
+                      isMe ? "rounded-br-none" : "rounded-bl-none"
+                    }`}
+                    style={{ backgroundColor: msg.color }}
+                  >
+                    {!isMe && (
+                      <p className="text-xs font-semibold mb-1 opacity-90">
+                        {msg.username}
+                      </p>
+                    )}
+                    <p style={{ whiteSpace: "pre-wrap" }}>{msg.content}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Input message */}
+          <div className="flex gap-2 mt-2">
+            <textarea
+              placeholder="Entrez votre message..."
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              className="flex-1 p-3 border rounded shadow focus:outline-none focus:ring-2 focus:ring-blue-300 resize-none"
+              rows={2}
+            />
+
+            <button
+              onClick={handleSendMessage}
+              disabled={!message.trim()}
+              className={`px-6 py-3 rounded text-white transition ${
+                message.trim()
+                  ? "bg-gray-800 hover:bg-blue-700"
+                  : "bg-gray-200 cursor-not-allowed"
+              }`}
+            >
+              Envoyer
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
