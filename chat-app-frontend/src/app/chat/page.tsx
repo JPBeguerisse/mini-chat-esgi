@@ -9,6 +9,7 @@ interface Message {
   username: string;
   content: string;
   color: string;
+  createdAt?: string;
 }
 
 interface User {
@@ -35,62 +36,6 @@ export default function ChatPage() {
   const socketRef = useRef<Socket | null>(null);
   const router = useRouter();
 
-  // useEffect(() => {
-  //   const token = localStorage.getItem("token");
-
-  //   if (!token) {
-  //     router.push("/login");
-  //     return;
-  //   }
-
-  //   // 📡 Connexion avec le token JWT
-  //   const socket = io(process.env.NEXT_PUBLIC_API_URL as string, {
-  //     transports: ["websocket"],
-  //     auth: {
-  //       token,
-  //     },
-  //   });
-
-  //   socketRef.current = socket;
-
-  //   // const decodedToken = JSON.parse(atob(token.split(".")[1]));
-  //   // setUsername(decodedToken.username);
-  //   // setColor(decodedToken.color || "#000000");
-
-  //   // 🔄 Récupère l'historique des messages
-  //   socket.on("history", (history: Message[]) => {
-  //     setMessages(history);
-  //   });
-
-  //   socket.on("message", (data: Message) => {
-  //     setMessages((prev) => [...prev, data]);
-  //   });
-
-  //   // 🔄 Récupère la liste des utilisateurs connectés
-  //   socket.on("users", (users: User[]) => {
-  //     setConnectedUsers(users);
-  //   });
-
-  //   socket.on("userTyping", (user: string) => {
-  //     setTypingUsers((prev) => (prev.includes(user) ? prev : [...prev, user]));
-  //   });
-  //   socket.on("userStopTyping", (user: string) => {
-  //     setTypingUsers((prev) => prev.filter((u) => u !== user));
-  //   });
-
-  //   socket.on("connect_error", (err) => {
-  //     console.error("Erreur de connexion :", err.message);
-  //     router.push("/login");
-  //   });
-
-  //   return () => {
-  //     socket.off("message");
-  //     socket.off("users");
-  //     socket.off("history");
-  //     socket.disconnect();
-  //   };
-  // }, [router]);
-
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -105,7 +50,7 @@ export default function ChatPage() {
 
     socketRef.current = socket;
 
-    // Appel à l'API pour récupérer les vraies infos
+    // Appel à l'API pour récupérer les infos
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/me`, {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -124,7 +69,7 @@ export default function ChatPage() {
         router.push("/login");
       });
 
-    // 🔄 Récupère l'historique des messages
+    // Récupère l'historique des messages
     socket.on("history", (history: Message[]) => {
       setMessages(history);
       if (history.length > 0) {
@@ -144,10 +89,9 @@ export default function ChatPage() {
       socket.emit("messageSeen", msg.id);
     });
 
-    // 🔄 Récupère la liste des utilisateurs connectés
+    // Récupère la liste des utilisateurs connectés
     socket.on("users", (users: User[]) => {
       setConnectedUsers(users);
-      // initialise les seens passés pour les autres
       setUserSeens((prev) => {
         const next = { ...prev };
         users.forEach((user) => {
@@ -190,11 +134,23 @@ export default function ChatPage() {
     };
   }, [router]);
 
+  useEffect(() => {
+    const socket = socketRef.current;
+    if (!socket) return;
+
+    socket.on("messageDeleted", (id) => {
+      setMessages((prev) => prev.filter((m) => m.id !== id));
+    });
+
+    return () => {
+      socket.off("messageDeleted");
+    };
+  }, []);
+
   const handleSendMessage = () => {
     if (!message.trim() || !socketRef.current) return;
     socketRef.current.emit("message", message.trim());
     setMessage("");
-    // arrêter indicator immédiatement
     socketRef.current.emit("stopTyping");
   };
 
@@ -275,8 +231,10 @@ export default function ChatPage() {
 
           {/* Messages */}
           <div className="flex-1 overflow-y-auto mb-4 space-y-3 max-h-[400px] pr-2">
-            {messages.map((msg) => {
+            {messages.map((msg, index) => {
               const isMe = msg.username === username;
+              const msgDate = msg.createdAt ? new Date(msg.createdAt) : null;
+
               const seens = Object.values(userSeens).filter(
                 (user) =>
                   user.lastSeen === msg.id &&
@@ -284,28 +242,68 @@ export default function ChatPage() {
                   user.username !== username
               );
 
+              const prevMsg = messages[index - 1];
+              const prevDate = prevMsg?.createdAt
+                ? new Date(prevMsg.createdAt)
+                : null;
+
+              const isNewDay =
+                !prevDate ||
+                msgDate?.toDateString() !== prevDate?.toDateString();
+
               return (
                 <div key={msg.id}>
+                  {isNewDay && msgDate && (
+                    <div className="text-center text-gray-400 text-sm my-4">
+                      {" "}
+                      {msgDate.toLocaleDateString("fr-FR", {
+                        weekday: "long",
+                        day: "2-digit",
+                        month: "long",
+                        year: "numeric",
+                      })}
+                    </div>
+                  )}
                   <div
                     className={`flex ${isMe ? "justify-end" : "justify-start"}`}
                   >
-                    {/* Bulle */}
-                    <div
-                      className={`p-3 rounded-lg max-w-xs break-words shadow-md text-white ${
-                        isMe ? "rounded-br-none" : "rounded-bl-none"
-                      }`}
-                      style={{ backgroundColor: msg.color }}
-                    >
-                      {!isMe && (
-                        <p className="text-xs font-semibold mb-1 opacity-90">
-                          {msg.username}
+                    <div>
+                      <div
+                        className={`relative p-3 rounded-lg max-w-xs break-words shadow-md text-white ${
+                          isMe ? "rounded-br-none" : "rounded-bl-none"
+                        }`}
+                        style={{ backgroundColor: msg.color }}
+                      >
+                        {!isMe && (
+                          <p className="text-xs font-semibold mb-1 opacity-90">
+                            {msg.username}
+                          </p>
+                        )}
+                        <p style={{ whiteSpace: "pre-wrap" }}>{msg.content}</p>
+                        {isMe && (
+                          <button
+                            onClick={() => {
+                              socketRef.current?.emit("deleteMessage", msg.id);
+                            }}
+                            className="cursor-pointer absolute top-1 right-1 text-xs text-white/60 hover:text-red-500 font-semibold "
+                            aria-label="Supprimer le message"
+                            title="Supprimer"
+                          >
+                            ✖
+                          </button>
+                        )}
+                      </div>
+                      {msg.createdAt && (
+                        <p className="text-xs text-right text-white/70 mt-1">
+                          {new Date(msg.createdAt).toLocaleTimeString("fr-FR", {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
                         </p>
                       )}
-                      <p style={{ whiteSpace: "pre-wrap" }}>{msg.content}</p>
                     </div>
                   </div>
 
-                  {/* Cercles “vu” sous la bulle */}
                   {seens.length > 0 && (
                     <div
                       className={`flex space-x-1 mt-1 ml-2 ${
@@ -345,7 +343,7 @@ export default function ChatPage() {
             })}
           </div>
 
-          {/* Indicator typing */}
+          {/* Indicateur typing */}
           {typingUsers.length > 0 && (
             <p className="text-sm italic mb-2 text-gray-300">
               {typingUsers.join(", ")} {typingUsers.length > 1 ? "sont" : "est"}{" "}
@@ -353,7 +351,6 @@ export default function ChatPage() {
             </p>
           )}
 
-          {/* Input + bouton */}
           <div className="flex gap-2">
             <textarea
               placeholder="Entrez votre message..."

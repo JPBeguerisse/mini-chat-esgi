@@ -75,7 +75,6 @@ export default function RegisterPage() {
       <div className="w-full max-w-md p-8 bg-white rounded-lg shadow-md">
         <h2 className="text-2xl font-bold mb-6 text-center">Inscription</h2>
 
-        {/* Affichage de l'erreur générale (mot de passe, etc.) */}
         {generalError && (
           <p className="text-red-500 text-sm mb-4">{generalError}</p>
         )}

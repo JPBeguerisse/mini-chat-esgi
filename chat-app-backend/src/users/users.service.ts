@@ -35,12 +35,10 @@ export class UsersService {
       const user = this.userRepository.create(dto);
       return await this.userRepository.save(user);
     } catch (error) {
-      // Si c’est déjà une exception NestJS (ex: ConflictException), on la relance telle quelle
       if (error instanceof ConflictException) {
         throw error;
       }
 
-      // Sinon, on envoie une erreur serveur plus générique
       throw new InternalServerErrorException('Une erreur interne est survenue');
     }
   }
@@ -53,9 +51,6 @@ export class UsersService {
     return this.userRepository.findOneBy({ id });
   }
 
-  /**
-   * Met à jour la couleur de l'utilisateur
-   */
   async updateColor(userId: number, color: string): Promise<void> {
     const result = await this.userRepository.update(userId, { color });
     if (result.affected === 0) {

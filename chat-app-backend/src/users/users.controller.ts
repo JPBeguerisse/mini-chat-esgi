@@ -19,7 +19,7 @@ export class UsersController {
   // }
 
   @UseGuards(JwtAuthGuard)
-  @Get('me') // ✅ bon nom de route
+  @Get('me')
   async getProfile(@Request() req) {
     const user = await this.usersService.findById(req.user.userId);
     if (!user) throw new NotFoundException('Utilisateur introuvable');

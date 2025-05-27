@@ -12,7 +12,6 @@ export default function HomePage() {
     if (!token) {
       router.push("/login");
     } else {
-      // Décoder le token pour afficher l'email de l'utilisateur
       const decoded = JSON.parse(atob(token.split(".")[1]));
       console.log(decoded);
       setUsername(decoded.username);
