@@ -27,7 +27,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   private connectedUsers: Record<
     string,
-    { userId: number; username: string; color: string }
+    { userId: number; username: string; color: string; lastSeen: number }
   > = {};
 
   constructor(
@@ -124,14 +124,17 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         userId: user.id,
         username: user.username,
         color: user.color,
+        lastSeen: 0,
       };
 
       const messages = await this.messagesService.findAll();
       client.emit('history', messages);
 
-      const usernames = Object.values(this.connectedUsers).map((u) => ({
-        username: u.username,
-        color: u.color,
+      // Envoie seulement les usernames et la couleur des utilisateurs connectés
+      const usernames = Object.values(this.connectedUsers).map((user) => ({
+        username: user.username,
+        color: user.color,
+        lastSeen: user.lastSeen,
       }));
 
       this.server.emit('users', usernames);
@@ -171,6 +174,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       username: user.username,
       content: savedMessage.content,
       color: savedMessage.color,
+      messageId: savedMessage.id,
     });
   }
 
@@ -225,5 +229,20 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ) {
     await this.messagesService.remove(id);
     this.server.emit('messageDeleted', id);
+  }
+
+  @SubscribeMessage('messageSeen')
+  async handleMessageSeen(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() messageId: number,
+  ) {
+    const user = this.connectedUsers[client.id];
+    if (!user) return;
+    user.lastSeen = messageId;
+    this.server.emit('userSeen', {
+      username: user.username,
+      color: user.color,
+      lastSeen: messageId,
+    });
   }
 }

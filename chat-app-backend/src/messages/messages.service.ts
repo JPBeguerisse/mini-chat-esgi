@@ -33,6 +33,13 @@ export class MessagesService {
     });
   }
 
+  // Récupérer un message par son ID
+  async findById(id: string): Promise<Message> {
+    const message = await this.messagesRepository.findOneBy({ id });
+    if (!message) throw new NotFoundException('Message non trouvé');
+    return message;
+  }
+
   // modifier un message par son ID
   async update(id: string, content: string): Promise<Message> {
     const message = await this.messagesRepository.findOneBy({ id });
