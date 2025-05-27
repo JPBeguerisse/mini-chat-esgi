@@ -36,6 +36,49 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private usersService: UsersService,
   ) {}
 
+  // async handleConnection(client: Socket) {
+  //   try {
+  //     const token = client.handshake.auth.token;
+
+  //     if (!token) {
+  //       console.log('Connexion refusée : pas de token');
+  //       client.disconnect();
+  //       return;
+  //     }
+
+  //     const secret = this.configService.get<string>('JWT_SECRET');
+  //     if (!secret) {
+  //       console.error('JWT_SECRET manquant');
+  //       client.disconnect();
+  //       return;
+  //     }
+
+  //     const payload = jwt.verify(token, secret) as jwt.JwtPayload;
+
+  //     // Enregistre l'utilisateur avec son username et sa couleur
+  //     this.connectedUsers[client.id] = {
+  //       userId: payload.sub as string,
+  //       username: payload.username as string,
+  //       color: payload.color as string,
+  //     };
+
+  //     // Envoie l'historique des messages au client connecté
+  //     const messages = await this.messagesService.findAll();
+  //     client.emit('history', messages);
+
+  //     // Envoie seulement les usernames et la couleur des utilisateurs connectés
+  //     const usernames = Object.values(this.connectedUsers).map((user) => ({
+  //       username: user.username,
+  //       color: user.color,
+  //     }));
+  //     console.log('Utilisateurs connectés :', usernames);
+  //     this.server.emit('users', usernames);
+  //   } catch (error) {
+  //     console.log('Connexion refusée : token invalide');
+  //     client.disconnect();
+  //   }
+  // }
+
   async handleConnection(client: Socket) {
     try {
       const token = client.handshake.auth.token;
@@ -53,9 +96,30 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         return;
       }
 
+      // 🔓 Décodage JWT
       const payload = jwt.verify(token, secret) as jwt.JwtPayload;
 
-      // Enregistre l'utilisateur avec son username et sa couleur
+      // ✅ Conversion sécurisée du sub (string → number)
+      if (!payload.sub) {
+        console.error('Token sans sub');
+        client.disconnect();
+        return;
+      }
+
+      const userId = Number(payload.sub);
+      if (isNaN(userId)) {
+        console.error('Token avec sub invalide');
+        client.disconnect();
+        return;
+      }
+
+      // 🔍 Récupération de l'utilisateur en base
+      const user = await this.usersService.findById(userId);
+      if (!user) {
+        console.error('Utilisateur introuvable');
+        client.disconnect();
+        return;
+      }
       this.connectedUsers[client.id] = {
         userId: payload.sub as string,
         username: payload.username as string,
@@ -63,7 +127,6 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         lastSeen: 0,
       };
 
-      // Envoie l'historique des messages au client connecté
       const messages = await this.messagesService.findAll();
       client.emit('history', messages);
 
@@ -73,7 +136,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         color: user.color,
         lastSeen: user.lastSeen,
       }));
-      console.log('Utilisateurs connectés :', usernames);
+
       this.server.emit('users', usernames);
     } catch (error) {
       console.log('Connexion refusée : token invalide');
@@ -127,7 +190,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     // Persistance en base
     await this.usersService.updateColor(user.userId, color);
     // Redistribue la liste users
-    const list = Object.values(this.connectedUsers).map(u => ({
+    const list = Object.values(this.connectedUsers).map((u) => ({
       username: u.username,
       color: u.color,
     }));

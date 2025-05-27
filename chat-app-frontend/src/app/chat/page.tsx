@@ -35,27 +35,94 @@ export default function ChatPage() {
   const socketRef = useRef<Socket | null>(null);
   const router = useRouter();
 
+  // useEffect(() => {
+  //   const token = localStorage.getItem("token");
+
+  //   if (!token) {
+  //     router.push("/login");
+  //     return;
+  //   }
+
+  //   // 📡 Connexion avec le token JWT
+  //   const socket = io(process.env.NEXT_PUBLIC_API_URL as string, {
+  //     transports: ["websocket"],
+  //     auth: {
+  //       token,
+  //     },
+  //   });
+
+  //   socketRef.current = socket;
+
+  //   // const decodedToken = JSON.parse(atob(token.split(".")[1]));
+  //   // setUsername(decodedToken.username);
+  //   // setColor(decodedToken.color || "#000000");
+
+  //   // 🔄 Récupère l'historique des messages
+  //   socket.on("history", (history: Message[]) => {
+  //     setMessages(history);
+  //   });
+
+  //   socket.on("message", (data: Message) => {
+  //     setMessages((prev) => [...prev, data]);
+  //   });
+
+  //   // 🔄 Récupère la liste des utilisateurs connectés
+  //   socket.on("users", (users: User[]) => {
+  //     setConnectedUsers(users);
+  //   });
+
+  //   socket.on("userTyping", (user: string) => {
+  //     setTypingUsers((prev) => (prev.includes(user) ? prev : [...prev, user]));
+  //   });
+  //   socket.on("userStopTyping", (user: string) => {
+  //     setTypingUsers((prev) => prev.filter((u) => u !== user));
+  //   });
+
+  //   socket.on("connect_error", (err) => {
+  //     console.error("Erreur de connexion :", err.message);
+  //     router.push("/login");
+  //   });
+
+  //   return () => {
+  //     socket.off("message");
+  //     socket.off("users");
+  //     socket.off("history");
+  //     socket.disconnect();
+  //   };
+  // }, [router]);
+
   useEffect(() => {
     const token = localStorage.getItem("token");
-
     if (!token) {
       router.push("/login");
       return;
     }
 
-    // 📡 Connexion avec le token JWT
     const socket = io(process.env.NEXT_PUBLIC_API_URL as string, {
       transports: ["websocket"],
-      auth: {
-        token,
-      },
+      auth: { token },
     });
 
     socketRef.current = socket;
 
-    const decodedToken = JSON.parse(atob(token.split(".")[1]));
-    setUsername(decodedToken.username);
-    setColor(decodedToken.color || "#000000");
+    // Appel à l'API pour récupérer les vraies infos
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/me`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error("Échec récupération user");
+        return res.json();
+      })
+      .then((data) => {
+        setUsername(data.username);
+        setColor(data.color);
+      })
+      .catch((err) => {
+        console.error("Erreur de profil:", err);
+        router.push("/login");
+      });
 
     // 🔄 Récupère l'historique des messages
     socket.on("history", (history: Message[]) => {
@@ -196,7 +263,7 @@ export default function ChatPage() {
             </p>
             <div className="mb-4">
               <label>
-                Ta couleur :
+                Moifie ta couleur :
                 <input
                   type="color"
                   value={color}
@@ -257,6 +324,16 @@ export default function ChatPage() {
             })}
           </div>
 
+          <div>
+            {/* Indicateur "en train d'écrire" */}
+            {typingUsers.length > 0 && (
+              <p className="italic mb-2">
+                {typingUsers.join(", ")}{" "}
+                {typingUsers.length > 1 ? "sont" : "est"} en train d’écrire…
+              </p>
+            )}
+          </div>
+
           {/* Input message */}
           <div className="flex gap-2 mt-2">
             <textarea
@@ -266,14 +343,6 @@ export default function ChatPage() {
               className="flex-1 p-3 border rounded shadow focus:outline-none focus:ring-2 focus:ring-blue-300 resize-none"
               rows={2}
             />
-
-            {/* Indicateur "en train d'écrire" */}
-            {typingUsers.length > 0 && (
-              <p className="italic mb-2">
-                {typingUsers.join(", ")}{" "}
-                {typingUsers.length > 1 ? "sont" : "est"} en train d’écrire…
-              </p>
-            )}
 
             <button
               onClick={handleSendMessage}

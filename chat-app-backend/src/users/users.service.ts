@@ -49,10 +49,14 @@ export class UsersService {
     return this.userRepository.findOne({ where: { email } });
   }
 
+  async findById(id: number) {
+    return this.userRepository.findOneBy({ id });
+  }
+
   /**
    * Met à jour la couleur de l'utilisateur
    */
-  async updateColor(userId: string, color: string): Promise<void> {
+  async updateColor(userId: number, color: string): Promise<void> {
     const result = await this.userRepository.update(userId, { color });
     if (result.affected === 0) {
       throw new NotFoundException('Utilisateur introuvable');
