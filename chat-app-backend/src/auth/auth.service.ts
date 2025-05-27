@@ -3,6 +3,7 @@ import { CreateUserDto } from 'src/users/dto/create-user.dto';
 import { UsersService } from 'src/users/users.service';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
+import { User } from 'src/users/entities/user.entity';
 
 @Injectable()
 export class AuthService {
@@ -49,4 +50,13 @@ export class AuthService {
       },
     };
   }
+
+  // generateJwt(user: User) {
+  //   return this.jwtService.sign({
+  //     sub: user.id,
+  //     username: user.username,
+  //     email: user.email,
+  //     color: user.color,
+  //   });
+  // }
 }
