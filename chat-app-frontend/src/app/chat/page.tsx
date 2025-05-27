@@ -134,6 +134,19 @@ export default function ChatPage() {
     };
   }, [router]);
 
+  useEffect(() => {
+    const socket = socketRef.current;
+    if (!socket) return;
+
+    socket.on("messageDeleted", (id) => {
+      setMessages((prev) => prev.filter((m) => m.id !== id));
+    });
+
+    return () => {
+      socket.off("messageDeleted");
+    };
+  }, []);
+
   const handleSendMessage = () => {
     if (!message.trim() || !socketRef.current) return;
     socketRef.current.emit("message", message.trim());
@@ -256,7 +269,7 @@ export default function ChatPage() {
                   >
                     <div>
                       <div
-                        className={`p-3 rounded-lg max-w-xs break-words shadow-md text-white ${
+                        className={`relative p-3 rounded-lg max-w-xs break-words shadow-md text-white ${
                           isMe ? "rounded-br-none" : "rounded-bl-none"
                         }`}
                         style={{ backgroundColor: msg.color }}
@@ -267,6 +280,18 @@ export default function ChatPage() {
                           </p>
                         )}
                         <p style={{ whiteSpace: "pre-wrap" }}>{msg.content}</p>
+                        {isMe && (
+                          <button
+                            onClick={() => {
+                              socketRef.current?.emit("deleteMessage", msg.id);
+                            }}
+                            className="cursor-pointer absolute top-1 right-1 text-xs text-white/60 hover:text-red-500 font-semibold "
+                            aria-label="Supprimer le message"
+                            title="Supprimer"
+                          >
+                            ✖
+                          </button>
+                        )}
                       </div>
                       {msg.createdAt && (
                         <p className="text-xs text-right text-white/70 mt-1">
