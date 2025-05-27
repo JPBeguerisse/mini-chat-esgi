@@ -10,6 +10,23 @@ import { zodResolver } from "@hookform/resolvers/zod";
 
 type RegisterFormData = z.infer<typeof registerSchema>;
 
+export const COLORS = [
+  "#ffffff",
+  "#7dd3fc",
+  "#2563eb",
+  "#737373",
+  "#fde047",
+  "#fbbf24",
+  "#92400e",
+  "#374151",
+  "#f97316",
+  "#f9a8d4",
+  "#f43f5e",
+  "#84cc16",
+  "#15803d",
+  "#a855f7",
+];
+
 export default function RegisterPage() {
   const [emailError, setEmailError] = useState("");
   const [usernameError, setUsernameError] = useState("");
@@ -19,6 +36,7 @@ export default function RegisterPage() {
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors },
   } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
@@ -54,7 +72,7 @@ export default function RegisterPage() {
 
   return (
     <div className="w-full max-w-md p-8 bg-white rounded-lg shadow-md">
-      <h2 className="text-2xl font-bold mb-6 text-center">Register</h2>
+      <h2 className="text-2xl font-bold mb-6 text-center">Inscription</h2>
 
       {/* Affichage de l'erreur générale (mot de passe, etc.) */}
       {generalError && (
@@ -99,6 +117,44 @@ export default function RegisterPage() {
         />
         {errors.password && (
           <p className="text-red-500 text-sm">{errors.password.message}</p>
+        )}
+
+        {/* Champ confirm password */}
+        <input
+          type="password"
+          placeholder="Confirmer le mot de passe"
+          {...register("confirmPassword")}
+          className="w-full p-3 border rounded"
+        />
+        {errors.confirmPassword && (
+          <p className="text-red-500 text-sm">
+            {errors.confirmPassword.message}
+          </p>
+        )}
+        {/* Champ color */}
+        <label className="block text-sm font-medium mb-1">Couleur</label>
+        <div className="flex flex-wrap gap-2 mb-4">
+          {COLORS.map((color) => (
+            <label key={color} className="cursor-pointer">
+              <input
+                type="radio"
+                value={color}
+                {...register("color")}
+                className="sr-only"
+              />
+              <div
+                className={`w-8 h-8 rounded border-2 ${
+                  watch("color") === color
+                    ? "border-black"
+                    : "border-transparent"
+                }`}
+                style={{ backgroundColor: color }}
+              />
+            </label>
+          ))}
+        </div>
+        {errors.color && (
+          <p className="text-red-500 text-sm">{errors.color.message}</p>
         )}
 
         <button
