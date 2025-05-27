@@ -27,7 +27,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   private connectedUsers: Record<
     string,
-    { userId: string; username: string; color: string; lastSeen: number }
+    { userId: number; username: string; color: string; lastSeen: number }
   > = {};
 
   constructor(
@@ -121,9 +121,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         return;
       }
       this.connectedUsers[client.id] = {
-        userId: payload.sub as string,
-        username: payload.username as string,
-        color: payload.color as string,
+        userId: user.id,
+        username: user.username,
+        color: user.color,
         lastSeen: 0,
       };
 
