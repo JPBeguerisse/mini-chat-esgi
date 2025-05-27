@@ -35,6 +35,7 @@ export default function ChatPage() {
   const typingTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const socketRef = useRef<Socket | null>(null);
   const router = useRouter();
+  const bottomRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -135,6 +136,10 @@ export default function ChatPage() {
   }, [router]);
 
   useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  useEffect(() => {
     const socket = socketRef.current;
     if (!socket) return;
 
@@ -180,7 +185,7 @@ export default function ChatPage() {
 
   return (
     <div className="min-h-screen bg-gray-900 text-white p-4 flex items-center justify-center">
-      <div className="w-full max-w-6xl h-[80vh] bg-gray-800 rounded-2xl overflow-hidden shadow-2xl flex flex-col md:flex-row">
+      <div className="w-full max-w-6xl min-h-[90vh] md:h-[80vh] bg-gray-800 rounded-2xl overflow-hidden shadow-2xl flex flex-col md:flex-row">
         {/* Sidebar utilisateurs */}
         <div className="md:w-1/4 p-4 bg-gray-700 border-r border-gray-600 flex flex-col">
           <h3 className="text-xl font-bold mb-2">Utilisateurs</h3>
@@ -230,7 +235,10 @@ export default function ChatPage() {
           </div>
 
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto mb-4 space-y-3 max-h-[400px] pr-2">
+          <div
+            className="flex-1 overflow-y-auto mb-4 space-y-3 pr-2"
+            style={{ maxHeight: "calc(100vh - 300px)" }}
+          >
             {messages.map((msg, index) => {
               const isMe = msg.username === username;
               const msgDate = msg.createdAt ? new Date(msg.createdAt) : null;
@@ -341,6 +349,7 @@ export default function ChatPage() {
                 </div>
               );
             })}
+            <div ref={bottomRef} />
           </div>
 
           {/* Indicateur typing */}
