@@ -184,60 +184,80 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white p-4 flex items-center justify-center">
-      <div className="w-full max-w-6xl min-h-[90vh] md:h-[80vh] bg-gray-800 rounded-2xl overflow-hidden shadow-2xl flex flex-col md:flex-row">
+    <div className="relative isolate overflow-hidden bg-gray-900 w-full h-screen flex justify-center items-center">
+      <div className="w-full max-w-4xl min-h-[75vh] md:h-[80vh] bg-gray-800 rounded-2xl overflow-hidden shadow-2xl flex flex-col md:flex-row fixed shadow-indigo-500/50">
         {/* Sidebar utilisateurs */}
-        <div className="md:w-1/4 p-4 bg-gray-700 border-r border-gray-600 flex flex-col">
-          <h3 className="text-xl font-bold mb-2">Utilisateurs</h3>
-          <p className="text-sm text-gray-300 mb-4">
-            {connectedUsers.length} utilisateur(s) connecté(s)
-          </p>
-          <ul className="overflow-y-auto flex-1 space-y-2 text-sm font-semibold">
-            {connectedUsers.map((user, index) => (
-              <li
-                key={index}
-                className="truncate"
-                style={{ color: user.color }}
-              >
-                {user.username}
-              </li>
-            ))}
-          </ul>
-          <button
-            onClick={handleLogout}
-            className="mt-4 bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded text-sm transition"
-          >
-            Déconnexion
-          </button>
+        <div className="md:w-1/4 p-4 bg-gray-900 border-r border-gray-800 flex flex-col inset-shadow-sm inset-shadow-gray-900/50">
+          <div className="absolute inset-y-0 left-0 -z-10 w-full overflow-hidden ring-1 ring-white/5">
+            <svg aria-hidden="true" className="absolute inset-0 size-full mask-[radial-gradient(100%_100%_at_top_right,white,transparent)] stroke-gray-700">
+              <defs>
+                <pattern x="100%" y={-1} id="54f88622-e7f8-4f1d-aaf9-c2f5e46dd1f2" width={200} height={200} patternUnits="userSpaceOnUse">
+                  <path d="M130 200V.5M.5 .5H200" fill="none" />
+                </pattern>
+              </defs>
+              <svg x="100%" y={-1} className="overflow-visible fill-gray-800/20">
+                <path d="M-470.5 0h201v201h-201Z" strokeWidth={0} />
+              </svg>
+              <rect fill="url(#54f88622-e7f8-4f1d-aaf9-c2f5e46dd1f2)" width="100%" height="100%" strokeWidth={0} />
+            </svg>
+            <div aria-hidden="true" className="absolute top-[calc(100%-13rem)] -left-56 transform-gpu blur-3xl lg:top-[calc(50%-7rem)] lg:left-[max(-14rem,calc(100%-59rem))]">
+              <div style={{ clipPath: 'polygon(74.1% 56.1%, 100% 38.6%, 97.5% 73.3%, 85.5% 100%, 80.7% 98.2%, 72.5% 67.7%, 60.2% 37.8%, 52.4% 32.2%, 47.5% 41.9%, 45.2% 65.8%, 27.5% 23.5%, 0.1% 35.4%, 17.9% 0.1%, 27.6% 23.5%, 76.1% 2.6%, 74.1% 56.1%)', }} className="aspect-1155/678 w-288.75 bg-linear-to-br from-[#80caff] to-[#4f46e5] opacity-20" />
+            </div>
+          </div>
+          <div className="flex grow flex-col gap-y-9 overflow-y-auto bg-gray-900 overflow-hidden">
+            <div className="flex h-16 shrink-0 items-center pt-8">
+              <h2 className="text-2xl font-bold text-white">
+                Bienvenue, {username} 👋
+              </h2>
+            </div>
+            <nav className="flex flex-1 flex-col">
+              <ul role="list" className="flex flex-1 flex-col gap-y-7">
+                <li>
+                  <div className="text-xs/6 font-semibold text-gray-600">Utilisateurs connectés</div>
+                  <ul role="list" className="-mx-2 mt-2 space-y-1">
+                    {connectedUsers.map((user, index) => (
+                      <li key={index}>
+                        <div
+                          className='text-gray-400 hover:bg-gray-800 hover:text-white group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold'
+                        >
+                          <span className="flex size-6 shrink-0 items-center justify-center rounded-lg border border-gray-700 text-[0.625rem] font-medium text-gray-400 group-hover:text-white" style={{ backgroundColor: user.color }}>
+                          </span>
+                          <span className="truncate">{user.username}</span>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </li>
+                <li className="mt-auto">
+                  <div className="text-xs/6 font-semibold text-gray-600 mb-2">Mon profil</div>
+                  <div>
+                    <label className="items-center text-gray-400 flex text-sm/6 font-semibold">
+                      <input
+                        type="color"
+                        value={color}
+                        onChange={(e) => handleColorChange(e.target.value)}
+                        className="mr-2 rounded-full"
+                      />
+                      Modifie ta couleur
+                    </label>
+                  </div>
+                  <button
+                    onClick={handleLogout}
+                    className="rounded-md bg-white px-3.5 py-2.5 text-sm font-semibold text-gray-900 shadow-xs hover:bg-gray-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white cursor-pointer md:w-full mt-2"
+                  >
+                    Déconnexion
+                  </button>
+                </li>
+              </ul>
+            </nav>
+          </div>
         </div>
 
         {/* Section chat */}
-        <div className="md:w-3/4 flex flex-col justify-between p-6">
-          {/* En-tête */}
-          <div>
-            <h2 className="text-2xl font-bold mb-1">
-              Bienvenue, <span style={{ color }}>{username}</span> 👋
-            </h2>
-            <p className="text-sm text-gray-300 mb-3">
-              Chattez en temps réel avec les autres utilisateurs.
-            </p>
-            <div>
-              <label className="text-sm text-gray-400">
-                Modifie ta couleur :
-                <input
-                  type="color"
-                  value={color}
-                  onChange={(e) => handleColorChange(e.target.value)}
-                  className="ml-2"
-                />
-              </label>
-            </div>
-          </div>
-
+        <div className="md:w-3/4 flex flex-col justify-between inset-shadow-sm inset-shadow-gray-900/50">
           {/* Messages */}
           <div
-            className="flex-1 overflow-y-auto mb-4 space-y-3 pr-2"
-            style={{ maxHeight: "calc(100vh - 300px)" }}
+            className="flex-1 overflow-y-auto space-y-3 pr-2 max-h-screen"
           >
             {messages.map((msg, index) => {
               const isMe = msg.username === username;
@@ -260,7 +280,7 @@ export default function ChatPage() {
                 msgDate?.toDateString() !== prevDate?.toDateString();
 
               return (
-                <div key={msg.id}>
+                <div key={msg.id} className="px-6">
                   {isNewDay && msgDate && (
                     <div className="text-center text-gray-400 text-sm my-4">
                       {" "}
@@ -275,12 +295,14 @@ export default function ChatPage() {
                   <div
                     className={`flex ${isMe ? "justify-end" : "justify-start"}`}
                   >
-                    <div>
+                    <div className={`flex items-end gap-2 ${isMe ? "flex-row-reverse" : "flex-row"}`}>
+                      <span className="flex size-6 shrink-0 items-center justify-center rounded-full border border-gray-700 text-[0.625rem] font-medium text-gray-400 group-hover:text-white" style={{ backgroundColor: msg.color }}>
+                      </span>
                       <div
-                        className={`relative p-3 rounded-lg max-w-xs break-words shadow-md text-white ${
-                          isMe ? "rounded-br-none" : "rounded-bl-none"
+                        className={`relative p-3 rounded-lg shadow-cyan-500 max-w-xs break-words shadow-md text-white ${
+                          isMe ? "rounded-br-none bg-indigo-500" : "rounded-bl-none bg-gray-700"
                         }`}
-                        style={{ backgroundColor: msg.color }}
+                        style={{ boxShadow: `0 15px 80px ${msg.color}`  }}
                       >
                         {!isMe && (
                           <p className="text-xs font-semibold mb-1 opacity-90">
@@ -328,20 +350,6 @@ export default function ChatPage() {
                             className="w-3 h-3 rounded-full"
                             style={{ backgroundColor: user.color }}
                           />
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="10"
-                            height="10"
-                            viewBox="0 0 16 16"
-                            fill="none"
-                            className="w-2 h-2"
-                            style={{ color: user.color }}
-                          >
-                            <path
-                              d="M6 10.17L3.53 7.7a.5.5 0 0 0-.7.7l3 3a.5.5 0 0 0 .7 0l6-6a.5.5 0 1 0-.7-.7L6 10.17z"
-                              fill="currentColor"
-                            />
-                          </svg>
                         </div>
                       ))}
                     </div>
@@ -354,19 +362,19 @@ export default function ChatPage() {
 
           {/* Indicateur typing */}
           {typingUsers.length > 0 && (
-            <p className="text-sm italic mb-2 text-gray-300">
+            <p className="text-sm italic m-2 text-gray-300">
               {typingUsers.join(", ")} {typingUsers.length > 1 ? "sont" : "est"}{" "}
               en train d’écrire…
             </p>
           )}
 
-          <div className="flex gap-2">
+          <div className="flex gap-2 p-4">
             <textarea
               placeholder="Entrez votre message..."
               value={message}
               onChange={(e) => handleTyping(e.target.value)}
-              className="flex-1 p-3 rounded-lg bg-gray-700 text-white resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              rows={2}
+              className="block w-full rounded-full bg-white/5 px-3.5 py-2 text-base text-white outline-1 -outline-offset-1 outline-white/10 placeholder:text-gray-500 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-500"
+              rows={1}
             />
             <button
               onClick={handleSendMessage}
@@ -374,7 +382,7 @@ export default function ChatPage() {
               className={`px-6 py-3 rounded text-sm font-semibold transition ${
                 message.trim()
                   ? "bg-indigo-500 hover:bg-indigo-600 text-white"
-                  : "bg-gray-500 cursor-not-allowed text-white/50"
+                  : "bg-gray-700 cursor-not-allowed text-white/50"
               }`}
             >
               Envoyer
@@ -382,6 +390,25 @@ export default function ChatPage() {
           </div>
         </div>
       </div>
+      <svg
+        viewBox="0 0 1024 1024"
+        aria-hidden="true"
+        className="absolute left-1/2 -z-10 size-256 -translate-x-1/2 mask-[radial-gradient(closest-side,white,transparent)]"
+      >
+        <circle
+          r={512}
+          cx={512}
+          cy={512}
+          fill="url(#8d958450-c69f-4251-94bc-4e091a323369)"
+          fillOpacity="0.7"
+        />
+        <defs>
+          <radialGradient id="8d958450-c69f-4251-94bc-4e091a323369">
+            <stop stopColor="#7775D6" />
+            <stop offset={1} stopColor="#E935C1" />
+          </radialGradient>
+        </defs>
+      </svg>
     </div>
   );
 }
