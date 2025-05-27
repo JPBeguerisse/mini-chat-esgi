@@ -146,4 +146,22 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       this.server.emit('userStopTyping', user.username);
     }
   }
+
+  @SubscribeMessage('editMessage')
+  async handleEditMessage(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { id: string; content: string },
+  ) {
+    const updated = await this.messagesService.update(data.id, data.content);
+    this.server.emit('messageEdited', updated);
+  }
+
+  @SubscribeMessage('deleteMessage')
+  async handleDeleteMessage(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() id: string,
+  ) {
+    await this.messagesService.remove(id);
+    this.server.emit('messageDeleted', id);
+  }
 }
