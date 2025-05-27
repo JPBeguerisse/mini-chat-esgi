@@ -140,7 +140,7 @@ export default function ChatPage() {
         content: data.content,
         color: data.color,
       };
-      setMessages(prev => [...prev, msg]);
+      setMessages((prev) => [...prev, msg]);
       socket.emit("messageSeen", msg.id);
     });
 
@@ -148,9 +148,9 @@ export default function ChatPage() {
     socket.on("users", (users: User[]) => {
       setConnectedUsers(users);
       // initialise les seens passés pour les autres
-      setUserSeens(prev => {
+      setUserSeens((prev) => {
         const next = { ...prev };
-        users.forEach(user => {
+        users.forEach((user) => {
           if (user.lastSeen !== undefined && user.username !== username) {
             next[user.username] = {
               username: user.username,
@@ -176,7 +176,7 @@ export default function ChatPage() {
     });
 
     socket.on("userSeen", (u: UserSeen) => {
-      setUserSeens(prev => ({ ...prev, [u.username]: u }));
+      setUserSeens((prev) => ({ ...prev, [u.username]: u }));
     });
 
     return () => {
@@ -223,15 +223,15 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
-      <div className="w-full max-w-4xl bg-white shadow-lg rounded-lg overflow-hidden flex flex-col md:flex-row">
-        {/* Utilisateurs connectés */}
-        <div className="md:w-1/4 border-r p-4 bg-gray-50 flex flex-col">
-          <h3 className="text-lg font-bold">Utilisateurs</h3>
-          <p className="text-sm text-gray-500 mb-2">
+    <div className="min-h-screen bg-gray-900 text-white p-4 flex items-center justify-center">
+      <div className="w-full max-w-6xl h-[80vh] bg-gray-800 rounded-2xl overflow-hidden shadow-2xl flex flex-col md:flex-row">
+        {/* Sidebar utilisateurs */}
+        <div className="md:w-1/4 p-4 bg-gray-700 border-r border-gray-600 flex flex-col">
+          <h3 className="text-xl font-bold mb-2">Utilisateurs</h3>
+          <p className="text-sm text-gray-300 mb-4">
             {connectedUsers.length} utilisateur(s) connecté(s)
           </p>
-          <ul className="space-y-2 text-sm flex-1 overflow-auto font-bold">
+          <ul className="overflow-y-auto flex-1 space-y-2 text-sm font-semibold">
             {connectedUsers.map((user, index) => (
               <li
                 key={index}
@@ -242,28 +242,27 @@ export default function ChatPage() {
               </li>
             ))}
           </ul>
-
           <button
             onClick={handleLogout}
-            className="mt-auto bg-gray-800 text-white py-2 px-4 rounded hover:bg-red-600 transition text-sm"
+            className="mt-4 bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded text-sm transition"
           >
             Déconnexion
           </button>
         </div>
 
-        {/* Chat principal */}
-        <div className="md:w-3/4 p-6 flex flex-col justify-between">
-          <div className="mb-4">
-            <h2 className="text-2xl font-bold mb-2">
-              Bienvenue, <strong style={{ color }}>{username}</strong> 👋
+        {/* Section chat */}
+        <div className="md:w-3/4 flex flex-col justify-between p-6">
+          {/* En-tête */}
+          <div>
+            <h2 className="text-2xl font-bold mb-1">
+              Bienvenue, <span style={{ color }}>{username}</span> 👋
             </h2>
-            <p className="text-sm text-gray-500">
-              Commencez à discuter en temps réel avec les utilisateurs
-              connectés.
+            <p className="text-sm text-gray-300 mb-3">
+              Chattez en temps réel avec les autres utilisateurs.
             </p>
-            <div className="mb-4">
-              <label>
-                Moifie ta couleur :
+            <div>
+              <label className="text-sm text-gray-400">
+                Modifie ta couleur :
                 <input
                   type="color"
                   value={color}
@@ -279,17 +278,17 @@ export default function ChatPage() {
             {messages.map((msg) => {
               const isMe = msg.username === username;
               const seens = Object.values(userSeens).filter(
-                user =>
-                  user.lastSeen === msg.id
-                  && user.username !== msg.username
-                  && user.username !== username
+                (user) =>
+                  user.lastSeen === msg.id &&
+                  user.username !== msg.username &&
+                  user.username !== username
               );
 
               return (
-                <div
-                  key={msg.id}
-                >
-                  <div className={`flex ${isMe ? "justify-end" : "justify-start"}`}>
+                <div key={msg.id}>
+                  <div
+                    className={`flex ${isMe ? "justify-end" : "justify-start"}`}
+                  >
                     {/* Bulle */}
                     <div
                       className={`p-3 rounded-lg max-w-xs break-words shadow-md text-white ${
@@ -308,12 +307,34 @@ export default function ChatPage() {
 
                   {/* Cercles “vu” sous la bulle */}
                   {seens.length > 0 && (
-                    <div className={`flex space-x-1 mt-1 ml-2 ${isMe ? "justify-end" : "justify-start"}`}>
-                      {seens.map(user => (
-                        <div key={user.username} className="flex items-center space-x-0.5" title={`${user.username} a vu`}>
-                          <span className="w-3 h-3 rounded-full" style={{ backgroundColor: user.color }} />
-                          <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 16 16" fill="none" className="w-2 h-2" style={{ color: user.color }}>
-                            <path d="M6 10.17L3.53 7.7a.5.5 0 0 0-.7.7l3 3a.5.5 0 0 0 .7 0l6-6a.5.5 0 1 0-.7-.7L6 10.17z" fill="currentColor" />
+                    <div
+                      className={`flex space-x-1 mt-1 ml-2 ${
+                        isMe ? "justify-end" : "justify-start"
+                      }`}
+                    >
+                      {seens.map((user) => (
+                        <div
+                          key={user.username}
+                          className="flex items-center space-x-0.5"
+                          title={`${user.username} a vu`}
+                        >
+                          <span
+                            className="w-3 h-3 rounded-full"
+                            style={{ backgroundColor: user.color }}
+                          />
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="10"
+                            height="10"
+                            viewBox="0 0 16 16"
+                            fill="none"
+                            className="w-2 h-2"
+                            style={{ color: user.color }}
+                          >
+                            <path
+                              d="M6 10.17L3.53 7.7a.5.5 0 0 0-.7.7l3 3a.5.5 0 0 0 .7 0l6-6a.5.5 0 1 0-.7-.7L6 10.17z"
+                              fill="currentColor"
+                            />
                           </svg>
                         </div>
                       ))}
@@ -324,33 +345,30 @@ export default function ChatPage() {
             })}
           </div>
 
-          <div>
-            {/* Indicateur "en train d'écrire" */}
-            {typingUsers.length > 0 && (
-              <p className="italic mb-2">
-                {typingUsers.join(", ")}{" "}
-                {typingUsers.length > 1 ? "sont" : "est"} en train d’écrire…
-              </p>
-            )}
-          </div>
+          {/* Indicator typing */}
+          {typingUsers.length > 0 && (
+            <p className="text-sm italic mb-2 text-gray-300">
+              {typingUsers.join(", ")} {typingUsers.length > 1 ? "sont" : "est"}{" "}
+              en train d’écrire…
+            </p>
+          )}
 
-          {/* Input message */}
-          <div className="flex gap-2 mt-2">
+          {/* Input + bouton */}
+          <div className="flex gap-2">
             <textarea
               placeholder="Entrez votre message..."
               value={message}
               onChange={(e) => handleTyping(e.target.value)}
-              className="flex-1 p-3 border rounded shadow focus:outline-none focus:ring-2 focus:ring-blue-300 resize-none"
+              className="flex-1 p-3 rounded-lg bg-gray-700 text-white resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500"
               rows={2}
             />
-
             <button
               onClick={handleSendMessage}
               disabled={!message.trim()}
-              className={`px-6 py-3 rounded text-white transition ${
+              className={`px-6 py-3 rounded text-sm font-semibold transition ${
                 message.trim()
-                  ? "bg-gray-800 hover:bg-blue-700"
-                  : "bg-gray-200 cursor-not-allowed"
+                  ? "bg-indigo-500 hover:bg-indigo-600 text-white"
+                  : "bg-gray-500 cursor-not-allowed text-white/50"
               }`}
             >
               Envoyer

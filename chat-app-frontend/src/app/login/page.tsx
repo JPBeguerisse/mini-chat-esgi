@@ -44,48 +44,50 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="w-full max-w-md p-8 bg-white rounded-lg shadow-md">
-      <h2 className="text-2xl font-bold mb-6 text-center">Login</h2>
-      {serverError && serverError.includes("Erreur inconnue") && (
-        <p className="text-red-500 text-sm mb-4">{serverError}</p>
-      )}
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <input
-          type="email"
-          placeholder="Email"
-          {...register("email")}
-          className="w-full p-3 border rounded"
-        />
-        {errors.email && (
-          <p className="text-red-500 text-sm">{errors.email.message}</p>
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
+      <div className="w-full max-w-md p-8 bg-white rounded-lg shadow-md">
+        <h2 className="text-2xl font-bold mb-6 text-center">Login</h2>
+        {serverError && serverError.includes("Erreur inconnue") && (
+          <p className="text-red-500 text-sm mb-4">{serverError}</p>
         )}
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <input
+            type="email"
+            placeholder="Email"
+            {...register("email")}
+            className="w-full p-3 border rounded"
+          />
+          {errors.email && (
+            <p className="text-red-500 text-sm">{errors.email.message}</p>
+          )}
 
-        <input
-          type="password"
-          placeholder="Password"
-          {...register("password")}
-          className="w-full p-3 border rounded"
-        />
-        {errors.password && (
-          <p className="text-red-500 text-sm">{errors.password.message}</p>
-        )}
-        <button
-          type="submit"
-          className="w-full bg-gray-800 text-white py-3 rounded hover:bg-black transition"
-        >
-          Login
-        </button>
-        {(serverError.includes("Email") ||
-          serverError.includes("Mot de passe")) && (
-          <p className="text-red-500 text-sm">{serverError}</p>
-        )}
-      </form>
-      <p className="text-center text-sm mt-4">
-        Pas encore inscrit ?{" "}
-        <a href="/register" className="text-blue-600 hover:underline">
-          Créer un compte
-        </a>
-      </p>
+          <input
+            type="password"
+            placeholder="Password"
+            {...register("password")}
+            className="w-full p-3 border rounded"
+          />
+          {errors.password && (
+            <p className="text-red-500 text-sm">{errors.password.message}</p>
+          )}
+          <button
+            type="submit"
+            className="w-full bg-gray-800 text-white py-3 rounded hover:bg-black transition"
+          >
+            Login
+          </button>
+          {(serverError.includes("Email") ||
+            serverError.includes("Mot de passe")) && (
+            <p className="text-red-500 text-sm">{serverError}</p>
+          )}
+        </form>
+        <p className="text-center text-sm mt-4">
+          Pas encore inscrit ?{" "}
+          <a href="/register" className="text-blue-600 hover:underline">
+            Créer un compte
+          </a>
+        </p>
+      </div>
     </div>
   );
 }
