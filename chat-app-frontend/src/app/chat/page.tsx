@@ -20,8 +20,11 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [connectedUsers, setConnectedUsers] = useState<User[]>([]);
   const [username, setUsername] = useState("");
-  const router = useRouter();
+  const [color, setColor] = useState("#000000");
+  const [typingUsers, setTypingUsers] = useState<string[]>([]);
+  const typingTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const socketRef = useRef<Socket | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -43,6 +46,7 @@ export default function ChatPage() {
 
     const decodedToken = JSON.parse(atob(token.split(".")[1]));
     setUsername(decodedToken.username);
+    setColor(decodedToken.color || "#000000");
 
     // 🔄 Récupère l'historique des messages
     socket.on("history", (history: Message[]) => {
@@ -56,6 +60,13 @@ export default function ChatPage() {
     // 🔄 Récupère la liste des utilisateurs connectés
     socket.on("users", (users: User[]) => {
       setConnectedUsers(users);
+    });
+
+    socket.on("userTyping", (user: string) => {
+      setTypingUsers((prev) => (prev.includes(user) ? prev : [...prev, user]));
+    });
+    socket.on("userStopTyping", (user: string) => {
+      setTypingUsers((prev) => prev.filter((u) => u !== user));
     });
 
     socket.on("connect_error", (err) => {
@@ -72,10 +83,11 @@ export default function ChatPage() {
   }, [router]);
 
   const handleSendMessage = () => {
-    if (socketRef.current) {
-      socketRef.current.emit("message", message);
-      setMessage("");
-    }
+    if (!message.trim() || !socketRef.current) return;
+    socketRef.current.emit("message", message.trim());
+    setMessage("");
+    // arrêter indicator immédiatement
+    socketRef.current.emit("stopTyping");
   };
 
   const handleLogout = () => {
@@ -85,6 +97,23 @@ export default function ChatPage() {
   };
 
   console.log("Messages:", messages);
+
+  const handleTyping = (text: string) => {
+    setMessage(text);
+    const sock = socketRef.current;
+    if (!sock) return;
+    sock.emit("typing");
+    if (typingTimeout.current) clearTimeout(typingTimeout.current);
+    typingTimeout.current = setTimeout(() => {
+      sock.emit("stopTyping");
+    }, 500);
+  };
+
+  const handleColorChange = (c: string) => {
+    setColor(c);
+    socketRef.current?.emit("updateColor", c);
+  };
+
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
       <div className="w-full max-w-4xl bg-white shadow-lg rounded-lg overflow-hidden flex flex-col md:flex-row">
@@ -118,12 +147,23 @@ export default function ChatPage() {
         <div className="md:w-3/4 p-6 flex flex-col justify-between">
           <div className="mb-4">
             <h2 className="text-2xl font-bold mb-2">
-              Bienvenue, {username} 👋
+              Bienvenue, <strong style={{ color }}>{username}</strong> 👋
             </h2>
             <p className="text-sm text-gray-500">
               Commencez à discuter en temps réel avec les utilisateurs
               connectés.
             </p>
+            <div className="mb-4">
+              <label>
+                Ta couleur :
+                <input
+                  type="color"
+                  value={color}
+                  onChange={(e) => handleColorChange(e.target.value)}
+                  className="ml-2"
+                />
+              </label>
+            </div>
           </div>
 
           {/* Messages */}
@@ -159,10 +199,18 @@ export default function ChatPage() {
             <textarea
               placeholder="Entrez votre message..."
               value={message}
-              onChange={(e) => setMessage(e.target.value)}
+              onChange={(e) => handleTyping(e.target.value)}
               className="flex-1 p-3 border rounded shadow focus:outline-none focus:ring-2 focus:ring-blue-300 resize-none"
               rows={2}
             />
+
+            {/* Indicateur "en train d'écrire" */}
+            {typingUsers.length > 0 && (
+              <p className="italic mb-2">
+                {typingUsers.join(", ")}{" "}
+                {typingUsers.length > 1 ? "sont" : "est"} en train d’écrire…
+              </p>
+            )}
 
             <button
               onClick={handleSendMessage}

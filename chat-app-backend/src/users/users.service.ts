@@ -2,6 +2,7 @@ import {
   ConflictException,
   Injectable,
   InternalServerErrorException,
+  NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -46,5 +47,15 @@ export class UsersService {
 
   async findByEmail(email: string) {
     return this.userRepository.findOne({ where: { email } });
+  }
+
+  /**
+   * Met à jour la couleur de l'utilisateur
+   */
+  async updateColor(userId: string, color: string): Promise<void> {
+    const result = await this.userRepository.update(userId, { color });
+    if (result.affected === 0) {
+      throw new NotFoundException('Utilisateur introuvable');
+    }
   }
 }
